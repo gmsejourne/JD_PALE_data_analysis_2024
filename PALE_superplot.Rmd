@@ -1,0 +1,125 @@
+---
+title: "gabrg2_cko_syn_bot"
+output: html_document
+date: "2024-01-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(ggpubr)
+library(ggbeeswarm)
+library(dplyr)
+library(readxl)
+library(stringr)
+library(dplyr)
+library(viridis)
+
+#windowsFonts(Arial = windowsFont("Arial"))
+
+# Defines a colorblind-friendly palette
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# Imports dataset called "combined" that has the columns "replicate," "variable," and "value"
+L1_counts <- read_excel("L1/summary.xlsx", sheet = 1) #change to PALE spreadsheet
+
+```
+
+```{r}
+# Orders the variables on x-axis
+L1_counts$genotype <- c(1:length(L1_counts$Image))
+L1_counts$sex <- c(1:length(L1_counts$Image))
+L1_counts$litter <- c(1:length(L1_counts$Image))
+L1_counts$animal <- c(1:length(L1_counts$Image))
+L1_counts$replicate <-c(1:length(L1_counts$Image))
+
+for (i in 1:length(L1_counts$Image)){
+    #L1_counts$litter[i] <- str_sub(L1_counts$Image[i], 8, 13)
+    L1_counts$animal[i] <- str_sub(L1_counts$Image[i], 1, 2)
+    #L1_counts$sex[i] <- str_sub(L1_counts$Image[i], 15, 16)
+    genotype <- # get genotype column
+
+}
+
+#L1_counts <- L1_counts[!(L1_counts$litter == "L49502"),]
+
+volume <- data.frame(animal = L1_counts$animal,
+                     genotype = L1_counts$genotype,
+                     volume = L1_counts$`Colocalized Puncta Count`)
+volume$animal <- factor(counts$animal)
+volume$genotype <- factor(counts$genotype)
+
+# Calculates averages of each replicate
+ReplicateAverages <- volume %>% group_by(genotype, animal) %>%
+  summarise(volume = mean(volume))
+ReplicateAverages
+
+# Gives the p-value for the t-Test of variable 1 and 2
+ttest1 <- t.test(x=ReplicateAverages$volume[1:4], y=ReplicateAverages$volume[5:7], alternative="two.sided",var.equal = TRUE)
+ttest1p <- ttest1[["p.value"]]
+ttest1p
+
+# Calculates total averages
+TotalAverages <- ReplicateAverages %>% summarise(synapse_count = mean(synapse_count))
+TotalAverages
+
+```
+
+```{r}
+# Plots Superplot based on biological replicate averages
+superplot_L1 <- ggplot(counts, aes(x=genotype,y=volume,color=factor(animal))) +
+
+  # Adds individual data points
+  geom_quasirandom(size=2, alpha = 1/2) +
+  
+  # Adds mean values as bars
+  stat_summary(data = TotalAverages, fun = mean, fun.min = mean, fun.max = mean,
+               geom = "bar", width = 0.8, color = "gray", alpha = 0.5) +
+               
+  # Adds error bars
+  stat_summary(data = ReplicateAverages, fun.data = mean_se,
+               geom = "errorbar", width = 0.1, color = "black") +
+               
+  # Adds color palette
+  #scale_colour_manual(7) +
+  
+  # Adds Replicative averages as points (argument "cex" can be used to spread the data points if the averages are close together)
+  geom_point(data=ReplicateAverages, size=5) +
+  
+  #Cosmetics and labeling
+  theme(
+    legend.text = element_text(size = 6),
+    legend.title = element_text(size = 8), 
+  ) +
+    ggtitle ("Layer 1 VGAT/GEPH colocs ") + xlab("") + ylab("Coloc counts")
+
+png(filename = "Gabrg2_cko_v_ctrl_superplot_L1.png", width = 1200, height = 800, res = 300)
+  superplot_L1
+  dev.off()
+superplot_L1
+```
+
+```{r}
+# Orders the variables on x-axis
+L5_counts$genotype <- c(1:length(L5_counts$Image))
+L5_counts$sex <- c(1:length(L5_counts$Image))
+L5_counts$litter <- c(1:length(L5_counts$Image))
+L5_counts$animal <- c(1:length(L5_counts$Image))
+L5_counts$replicate <-c(1:length(L5_counts$Image))
+
+for (i in 1:length(L5_counts$Image)){
+    L5_counts$litter[i] <- str_sub(L5_counts$Image[i], 8, 13)
+    L5_counts$animal[i] <- str_sub(L5_counts$Image[i], 8, 16)
+    L5_counts$sex[i] <- str_sub(L5_counts$Image[i], 15, 16)
+    if (str_sub(L5_counts$Image[i], 24, 24) == "e") {
+      L5_counts$genotype[i] <- "CTRL"
+    }else{
+      L5_counts$genotype[i] <- "cKO"
+    }
+}
+
+#L5_counts <- L5_counts[!(L5_counts$litter == "L49502"),]
+
+```
+
